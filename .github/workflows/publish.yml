@@ -1,0 +1,53 @@
+name: Publish to npm
+
+# Publishes n8n-nodes-thunderphone with npm trusted publishing (GitHub OIDC) and a provenance
+# attestation. No npm token is stored: npmjs.com lists this repository and this workflow file
+# (publish.yml) as the package's trusted publisher. n8n's community-node scanner requires the
+# provenance statement and reads the source at the attested commit from this repository.
+#
+# The package's prepublishOnly hook (`n8n-node prerelease`) refuses a bare `npm publish` unless
+# RELEASE_MODE is set, so the publish step sets it explicitly.
+#
+# This file is mirrored from the ThunderPhone monorepo (integrations/n8n/.github/workflows/);
+# edit it there.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          cache: npm
+      - name: Validate release version
+        run: |
+          node -e 'const p = require("./package.json"); if (process.env.GITHUB_REF_NAME !== `v${p.version}`) { console.error(`tag ${process.env.GITHUB_REF_NAME} does not match package version ${p.version}`); process.exit(1); }'
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+      # Trusted publishing needs npm 11.5.1 or newer; Node 22 ships npm 10.
+      - run: npm install -g npm@^11.5.1
+      - name: Publish package
+        env:
+          RELEASE_MODE: 'true'
+        run: npm publish --access public --provenance

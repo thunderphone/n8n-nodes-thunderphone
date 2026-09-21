@@ -1,0 +1,64 @@
+{
+	"name": "n8n-nodes-thunderphone",
+	"version": "0.1.1",
+	"description": "n8n nodes for ThunderPhone calls, campaigns, agents, phone numbers, and webhook events.",
+	"license": "MIT",
+	"homepage": "https://thunderphone.com/docs",
+	"keywords": [
+		"n8n-community-node-package",
+		"n8n",
+		"thunderphone",
+		"voice-ai",
+		"webhook"
+	],
+	"author": {
+		"name": "ThunderPhone",
+		"email": "support@thunderphone.com",
+		"url": "https://thunderphone.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/thunderphone/n8n-nodes-thunderphone.git"
+	},
+	"bugs": {
+		"url": "https://github.com/thunderphone/n8n-nodes-thunderphone/issues"
+	},
+	"main": "dist/nodes/ThunderPhone/ThunderPhone.node.js",
+	"scripts": {
+		"build": "n8n-node build",
+		"build:watch": "tsc --watch",
+		"dev": "n8n-node dev",
+		"lint": "n8n-node lint",
+		"lint:fix": "n8n-node lint --fix",
+		"format": "prettier --write .",
+		"format:check": "prettier --check .",
+		"test": "vitest run",
+		"release": "n8n-node release",
+		"prepublishOnly": "n8n-node prerelease"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"strict": true,
+		"credentials": [
+			"dist/credentials/ThunderPhoneApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/ThunderPhone/ThunderPhone.node.js",
+			"dist/nodes/ThunderPhone/ThunderPhoneTrigger.node.js"
+		]
+	},
+	"devDependencies": {
+		"@n8n/node-cli": "0.48.5",
+		"@types/node": "^24.10.0",
+		"eslint": "9.39.4",
+		"prettier": "3.8.3",
+		"typescript": "5.9.3",
+		"vitest": "4.1.11"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}
