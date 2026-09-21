@@ -25,8 +25,8 @@ next mirror run.
 
 1. Confirm the package icon still matches the official thunderbolt-only source described in
    `icons/README.md`.
-2. Register the public repository's workflow as the package's npm trusted publisher (npm
-   11.5.1 or newer, signed in as a package maintainer):
+2. Register the public repository's workflow as the package's npm trusted publisher (the
+   `npm trust` command needs npm 11.15.0 or newer; sign in as a package maintainer):
 
    ```bash
    npm trust github n8n-nodes-thunderphone \
