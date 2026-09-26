@@ -129,3 +129,24 @@ A person or a signed-in agent does this in a browser. Nothing here needs a Thund
 8. When a template is published, record its n8n.io URL next to its row in `README.md`.
 
 Do not describe a template as published until it is live on <https://n8n.io/workflows/>.
+
+## What actually happened (2026-09-26)
+
+The live portal flow was shorter than the front-end code suggested. **Share new template**
+opens a dialog with the Workflow JSON upload, Pricing (Free) and the terms checkbox. **Submit
+for AI review** ran the AI check (about 15 minutes for template 1). The template then went
+straight to **Under review** with no feedback shown and no step for the description fields.
+The listing copy therefore comes from the workflow itself, so keep the overview sticky
+complete. If the portal later asks for description fields, paste them from `README.md`.
+
+Upload the JSON with a browser tool that can set file inputs directly. Codex's Chrome extension
+needs "Allow access to file URLs" for this.
+
+## Submission log
+
+| Template | Submitted | Status |
+| --- | --- | --- |
+| Log completed ThunderPhone calls to Google Sheets | 2026-09-26 | Under review (3-5 business days) |
+| Send Slack alerts for low-scoring ThunderPhone calls | | Waiting: one template in review at a time |
+| Call new leads from a webhook with a ThunderPhone AI voice agent | | Waiting |
+| Add Google Sheets contacts to a ThunderPhone campaign and start it after approval | | Waiting |
