@@ -101,8 +101,10 @@ A person or a signed-in agent does this in a browser. Nothing here needs a Thund
    one that holds the `n8n-nodes-thunderphone` node submission, so templates show ThunderPhone as
    the author. Create a creator account at <https://creators.n8n.io/register> only if that
    account cannot be used.
-2. Take a canvas screenshot of the template for the description's workflow image: import the
-   JSON into any n8n instance with the ThunderPhone node installed and capture the whole canvas.
+2. The canvas images are in `images/<template slug>.png` and are public through the mirror at
+   `https://raw.githubusercontent.com/thunderphone/n8n-nodes-thunderphone/main/templates/images/<template slug>.png`.
+   Recapture one after changing its template: import the JSON into an n8n instance with the
+   ThunderPhone node installed and capture the whole canvas.
 3. On the dashboard, choose **Submit a template**. In **Workflow JSON**, upload the template file
    (for example `log-completed-calls-to-google-sheets.json`). Leave **Price (USD)** and
    **Purchase URL** empty.
