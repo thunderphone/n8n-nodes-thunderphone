@@ -1,0 +1,237 @@
+{
+	"name": "Call new leads from a webhook with a ThunderPhone AI voice agent",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Call new leads from a webhook with a ThunderPhone AI voice agent\n\nWhen your form, CRM or landing page posts a new lead to this workflow, a ThunderPhone AI voice agent calls the lead within seconds.\n\n### How it works\n1. **New lead** receives an authenticated POST such as `{\"lead_id\": \"crm-10482\", \"phone\": \"+14155550199\", \"first_name\": \"Jamie\", \"consent_to_call\": true}`.\n2. **Map lead fields** picks the ID, phone, name and consent flag.\n3. **Ready to call?** stops leads missing any of them.\n4. **Place outbound call** calls the lead with your saved agent. The lead ID plus this node's ID form the idempotency key, so a retry or repeated webhook for the same lead returns the original call.\n\n### Setup\n1. Install the verified **ThunderPhone** node (`n8n-nodes-thunderphone`) from the nodes panel. An instance owner or admin does this once.\n2. In ThunderPhone, open **Organization > Keys**, create a server API key and save it in n8n as a **ThunderPhone API** credential.\n3. In ThunderPhone, set up an agent and an outbound-enabled From Number, and have an admin complete the one-time outbound calling confirmation.\n4. Pick the agent and From Number in **Place outbound call**.\n5. Add a Header Auth credential to **New lead**, send that header from your lead source to the Production URL, and publish the workflow.\n\n### Customization\n- Match **Map lead fields** to your source's field names. Map `lead_id` to a stable record ID, never a timestamp or random value.\n- Each lead is called once per node. A duplicated or re-imported copy of the workflow can get new node IDs and call the same lead again.\n\nYour organization is responsible for having consent to call each number and for following the calling laws that apply.",
+				"height": 860,
+				"width": 580
+			},
+			"id": "7d9acc6e-d875-588c-8b74-1e17a168976e",
+			"name": "Template overview",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-740, -220]
+		},
+		{
+			"parameters": {
+				"content": "## 1. Receive the lead\nYour lead source posts JSON here. **Map lead fields** normalizes it.",
+				"height": 380,
+				"width": 480,
+				"color": 7
+			},
+			"id": "03863945-da9f-5aec-a318-2b16b1e38e31",
+			"name": "Section: receive the lead",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-100, -20]
+		},
+		{
+			"parameters": {
+				"content": "## 2. Check the lead\nNeeds an ID, a phone number and consent.",
+				"height": 640,
+				"width": 300,
+				"color": 7
+			},
+			"id": "e1c2e8bd-caad-54e3-aa81-3680cde293c9",
+			"name": "Section: check",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [420, -20]
+		},
+		{
+			"parameters": {
+				"content": "### Real calls\nThis node dials real phone numbers and spends ThunderPhone credits.\n\nUse an outbound-enabled From Number. Your organization is responsible for having consent to call each number and for following the calling laws that apply.",
+				"height": 580,
+				"width": 300,
+				"color": 3
+			},
+			"id": "3431ecbb-9a70-56b2-a3ee-781a9c071a3c",
+			"name": "Warning: real calls",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [740, -220]
+		},
+		{
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "thunderphone-new-lead",
+				"authentication": "headerAuth",
+				"options": {}
+			},
+			"id": "d4cf2781-f0ca-5f8b-a843-edaf4b77e190",
+			"name": "New lead",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [0, 180],
+			"webhookId": "f002e058-85d3-57c3-b653-4ac44d06a87c"
+		},
+		{
+			"parameters": {
+				"assignments": {
+					"assignments": [
+						{
+							"id": "f8d478fb-dbb7-5e00-90e5-bd0e57c329a7",
+							"name": "lead_id",
+							"value": "={{ String($json.body.lead_id ?? '').trim() }}",
+							"type": "string"
+						},
+						{
+							"id": "7058b625-16dd-5dac-aee0-f08697e63c40",
+							"name": "phone",
+							"value": "={{ String($json.body.phone ?? '').trim() }}",
+							"type": "string"
+						},
+						{
+							"id": "5363027f-9b30-538b-abc1-b78f8efd5101",
+							"name": "first_name",
+							"value": "={{ $json.body.first_name ?? '' }}",
+							"type": "string"
+						},
+						{
+							"id": "59653c7e-1d81-5ad7-a4bf-e3d1fc163de3",
+							"name": "consent_to_call",
+							"value": "={{ [true, 'true', 'yes', 'Yes', 'YES'].includes($json.body.consent_to_call) }}",
+							"type": "boolean"
+						}
+					]
+				},
+				"options": {}
+			},
+			"id": "7d0fc2ec-dca4-5b4c-8da2-fecfa2d2db83",
+			"name": "Map lead fields",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [220, 180]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "strict",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"id": "027f6772-610b-57b8-a440-a1990d35d3af",
+							"leftValue": "={{ $json.lead_id }}",
+							"rightValue": "",
+							"operator": {
+								"type": "string",
+								"operation": "notEmpty",
+								"singleValue": true
+							}
+						},
+						{
+							"id": "5ca81f92-2750-5086-92c7-2464414eb98d",
+							"leftValue": "={{ $json.phone }}",
+							"rightValue": "",
+							"operator": {
+								"type": "string",
+								"operation": "notEmpty",
+								"singleValue": true
+							}
+						},
+						{
+							"id": "668adbca-f4a0-5e44-a0d3-5a5626346757",
+							"leftValue": "={{ $json.consent_to_call }}",
+							"rightValue": "",
+							"operator": {
+								"type": "boolean",
+								"operation": "true",
+								"singleValue": true
+							}
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "5ae9f1ff-ec83-5d11-82aa-2236ba302918",
+			"name": "Ready to call?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [500, 180]
+		},
+		{
+			"parameters": {
+				"resource": "outboundCall",
+				"operation": "place",
+				"agentId": "",
+				"fromNumber": "",
+				"toNumber": "={{ $json.phone }}",
+				"variables": "={{ { first_name: $json.first_name } }}",
+				"idempotencyKey": "={{ $json.lead_id }}"
+			},
+			"id": "ef55be65-ae78-526c-836e-5ce92388b4df",
+			"name": "Place outbound call",
+			"type": "n8n-nodes-thunderphone.thunderPhone",
+			"typeVersion": 1,
+			"position": [800, 160],
+			"retryOnFail": true,
+			"maxTries": 3,
+			"waitBetweenTries": 5000
+		},
+		{
+			"parameters": {},
+			"id": "6b084a05-6a9b-5a00-8890-27bad4aa86b4",
+			"name": "Not called",
+			"type": "n8n-nodes-base.noOp",
+			"typeVersion": 1,
+			"position": [560, 440]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"New lead": {
+			"main": [
+				[
+					{
+						"node": "Map lead fields",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Map lead fields": {
+			"main": [
+				[
+					{
+						"node": "Ready to call?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Ready to call?": {
+			"main": [
+				[
+					{
+						"node": "Place outbound call",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Not called",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"tags": [],
+	"meta": {
+		"templateCredsSetupCompleted": false
+	}
+}

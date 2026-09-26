@@ -1,0 +1,545 @@
+{
+	"name": "Add Google Sheets contacts to a ThunderPhone campaign and start it after approval",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Add Google Sheets contacts to a ThunderPhone campaign and start it after approval\n\nLoad a Google Sheets call list into an empty draft ThunderPhone campaign and start it only after someone approves in a form.\n\n### How it works\n1. **Get campaign** and **Empty draft?** stop unless the campaign in **Settings** is an empty draft, so a re-run stops before adding contacts again.\n2. **Read contact rows** loads the sheet. **Keep rows with consent** keeps rows with a phone number and `yes` in `consent_to_call`.\n3. **Map contact fields** picks the columns; `lead_id` and `first_name` become call variables. Duplicate numbers are removed.\n4. **Add contacts to draft campaign** uploads it and reports accepted and rejected rows.\n5. **Approve campaign start** waits up to 24 hours; **Start campaign** runs only if approved.\n\n### Setup\n1. Install the verified **ThunderPhone** node (`n8n-nodes-thunderphone`) from the nodes panel. An instance owner or admin does this once.\n2. In ThunderPhone, open **Organization > Keys**, create a server API key and save it in n8n as a **ThunderPhone API** credential. The key's user needs the admin or owner role. Select the credential in **Get campaign** too.\n3. Create a ThunderPhone campaign with an agent and an outbound-enabled From Number, leave it in Draft, and paste its ID into **Settings**.\n4. Create a tab named `Contacts` with columns `lead_id`, `phone_number` (E.164), `first_name` and `consent_to_call`, then pick the spreadsheet in **Read contact rows**.\n5. Read the confirmation in **Start campaign** and turn it on.\n\n### Customization\n- Add columns in **Map contact fields** to pass more call variables.\n- One run uploads at most 5,000 contacts.\n\nYour organization is responsible for having consent to call each number and for following the calling laws that apply.",
+				"height": 980,
+				"width": 640
+			},
+			"id": "6b38a174-b474-5f33-bea4-458c6aef501e",
+			"name": "Template overview",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-760, -260]
+		},
+		{
+			"parameters": {
+				"content": "## 1. Check the campaign\nStops unless the campaign is a draft with no contacts.",
+				"height": 620,
+				"width": 820,
+				"color": 7
+			},
+			"id": "66f5aff2-1997-52b5-b6dc-d7d95c4b0312",
+			"name": "Section: check campaign",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [140, -20]
+		},
+		{
+			"parameters": {
+				"content": "## 2. Load the call list\nReads the sheet, keeps rows with consent and removes duplicate numbers.",
+				"height": 380,
+				"width": 980,
+				"color": 7
+			},
+			"id": "c9f72df1-b865-51c1-9232-78d444f23303",
+			"name": "Section: load contacts",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [1000, -20]
+		},
+		{
+			"parameters": {
+				"content": "### Not deduplicated\nThunderPhone keeps every contact you add, so **Empty draft?** only lets this step run on a draft with no contacts.",
+				"height": 600,
+				"width": 240,
+				"color": 3
+			},
+			"id": "bea70d83-3b93-5476-afa8-8848bfec6183",
+			"name": "Warning: add contacts",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [1990, -240]
+		},
+		{
+			"parameters": {
+				"content": "## 3. Approve, then start\nNothing is called until someone approves in the form.",
+				"height": 620,
+				"width": 440,
+				"color": 7
+			},
+			"id": "493f6ad2-87aa-5182-b9ab-71c3420112a1",
+			"name": "Section: approve and start",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [2260, -20]
+		},
+		{
+			"parameters": {
+				"content": "### Real calls\nStarting dials every contact and spends ThunderPhone credits. Turn the confirmation on once you have read it.\n\nIf this step fails after contacts were added, start the campaign in ThunderPhone instead of re-running.\n\nYour organization is responsible for having consent to call each number and for following the calling laws that apply.",
+				"height": 600,
+				"width": 320,
+				"color": 3
+			},
+			"id": "434b622c-f8ec-5529-bea7-eaa7973e8ffa",
+			"name": "Warning: start campaign",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [2720, -300]
+		},
+		{
+			"parameters": {},
+			"id": "eee61fb0-4653-555e-9953-ab043a73b73e",
+			"name": "Run import",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [0, 180]
+		},
+		{
+			"parameters": {
+				"assignments": {
+					"assignments": [
+						{
+							"id": "a22ff994-b19c-534e-aeda-3d190cc2dfbe",
+							"name": "campaignId",
+							"value": "PASTE_DRAFT_CAMPAIGN_ID",
+							"type": "string"
+						}
+					]
+				},
+				"options": {}
+			},
+			"id": "23906b31-e2a0-5713-9806-0332fb9a2e12",
+			"name": "Settings",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [200, 180]
+		},
+		{
+			"parameters": {
+				"url": "=https://api.thunderphone.com/v1/campaigns/{{ encodeURIComponent($json.campaignId.trim()) }}",
+				"authentication": "predefinedCredentialType",
+				"nodeCredentialType": "thunderPhoneApi",
+				"options": {}
+			},
+			"id": "e8c1c9a8-65eb-5967-9b95-4691cfed43a1",
+			"name": "Get campaign",
+			"type": "n8n-nodes-base.httpRequest",
+			"typeVersion": 4.2,
+			"position": [400, 180]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "strict",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"id": "2f72a3cb-29fa-5c24-a680-8881c6844ce2",
+							"leftValue": "={{ $json.status }}",
+							"rightValue": "draft",
+							"operator": {
+								"type": "string",
+								"operation": "equals"
+							}
+						},
+						{
+							"id": "cb49f205-0662-56ef-a0d4-151aae4c4184",
+							"leftValue": "={{ Number($json.total_count ?? 0) + ($json.contacts ?? []).length }}",
+							"rightValue": 0,
+							"operator": {
+								"type": "number",
+								"operation": "equals"
+							}
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "5a7ca243-f277-579b-8479-1c876e252e34",
+			"name": "Empty draft?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [600, 180]
+		},
+		{
+			"parameters": {
+				"errorMessage": "This campaign already has contacts or isn't a draft. Create a new draft campaign and run again."
+			},
+			"id": "9438a8e4-a5bd-5200-b6f4-e4c13b4293f6",
+			"name": "Campaign not ready",
+			"type": "n8n-nodes-base.stopAndError",
+			"typeVersion": 1,
+			"position": [820, 400]
+		},
+		{
+			"parameters": {
+				"documentId": {
+					"__rl": true,
+					"value": "",
+					"mode": "list"
+				},
+				"sheetName": {
+					"__rl": true,
+					"value": "Contacts",
+					"mode": "name"
+				},
+				"options": {}
+			},
+			"id": "e73db34c-ad89-5dec-a97f-e98541c5d497",
+			"name": "Read contact rows",
+			"type": "n8n-nodes-base.googleSheets",
+			"typeVersion": 4.6,
+			"position": [1060, 160]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "strict",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"id": "727e3a75-59d2-5cad-855e-9437adb8425d",
+							"leftValue": "={{ String($json.phone_number ?? '').trim() }}",
+							"rightValue": "",
+							"operator": {
+								"type": "string",
+								"operation": "notEmpty",
+								"singleValue": true
+							}
+						},
+						{
+							"id": "bc73f311-7d1e-5bd7-80c4-62a79d7e5d3a",
+							"leftValue": "={{ String($json.consent_to_call ?? '').trim().toLowerCase() }}",
+							"rightValue": "yes",
+							"operator": {
+								"type": "string",
+								"operation": "equals"
+							}
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "e24740b8-b760-582b-a2f2-c8215a4a1f70",
+			"name": "Keep rows with consent",
+			"type": "n8n-nodes-base.filter",
+			"typeVersion": 2.2,
+			"position": [1260, 160]
+		},
+		{
+			"parameters": {
+				"assignments": {
+					"assignments": [
+						{
+							"id": "80dc2bcd-654c-5f9e-b949-4771bf03d106",
+							"name": "phone_number",
+							"value": "={{ String($json.phone_number).replace(/[\\s().-]/g, '') }}",
+							"type": "string"
+						},
+						{
+							"id": "26ce1569-2c85-5b58-a6a7-7eb1eeaaca07",
+							"name": "lead_id",
+							"value": "={{ String($json.lead_id ?? '') }}",
+							"type": "string"
+						},
+						{
+							"id": "bc559031-6a71-542d-971b-eb1a8ce5bfa7",
+							"name": "first_name",
+							"value": "={{ $json.first_name ?? '' }}",
+							"type": "string"
+						}
+					]
+				},
+				"options": {}
+			},
+			"id": "fdd42b43-a5a3-5b43-8f16-eb6a19a23028",
+			"name": "Map contact fields",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [1460, 160]
+		},
+		{
+			"parameters": {
+				"compare": "selectedFields",
+				"fieldsToCompare": "phone_number",
+				"options": {}
+			},
+			"id": "b5fe42c5-f4d6-5e79-a542-d391dfb054b9",
+			"name": "Remove duplicate numbers",
+			"type": "n8n-nodes-base.removeDuplicates",
+			"typeVersion": 2,
+			"position": [1660, 160]
+		},
+		{
+			"parameters": {
+				"aggregate": "aggregateAllItemData",
+				"destinationFieldName": "contacts",
+				"options": {}
+			},
+			"id": "a7ba0205-9f7a-50cc-adad-bf145b9c5b58",
+			"name": "Build contact list",
+			"type": "n8n-nodes-base.aggregate",
+			"typeVersion": 1,
+			"position": [1860, 160]
+		},
+		{
+			"parameters": {
+				"resource": "campaign",
+				"operation": "addContacts",
+				"campaignId": "={{ $('Settings').first().json.campaignId.trim() }}",
+				"contacts": "={{ $json.contacts }}"
+			},
+			"id": "c3df67c2-60e0-5b7c-807f-0e2c8d75a52d",
+			"name": "Add contacts to draft campaign",
+			"type": "n8n-nodes-thunderphone.thunderPhone",
+			"typeVersion": 1,
+			"position": [2060, 160]
+		},
+		{
+			"parameters": {
+				"resume": "form",
+				"formTitle": "Start the ThunderPhone campaign?",
+				"formDescription": "=ThunderPhone accepted {{ $json.accepted }} contacts and rejected {{ $json.rejected }}. Starting the campaign calls every accepted contact and spends credits.",
+				"formFields": {
+					"values": [
+						{
+							"fieldLabel": "Decision",
+							"fieldType": "radio",
+							"fieldOptions": {
+								"values": [
+									{
+										"option": "Start the campaign"
+									},
+									{
+										"option": "Do not start"
+									}
+								]
+							},
+							"requiredField": true
+						}
+					]
+				},
+				"limitWaitTime": true,
+				"resumeAmount": 24,
+				"resumeUnit": "hours",
+				"options": {}
+			},
+			"id": "1bc7badd-11e4-5b1d-94c5-1cdb1f640877",
+			"name": "Approve campaign start",
+			"type": "n8n-nodes-base.wait",
+			"typeVersion": 1.1,
+			"position": [2320, 160],
+			"webhookId": "64cd00d6-2e2e-5acb-9e42-6ec80a918716"
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "strict",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"id": "05022161-c3f5-52cc-b8a3-b92b5ebbd6a9",
+							"leftValue": "={{ $json.Decision }}",
+							"rightValue": "Start the campaign",
+							"operator": {
+								"type": "string",
+								"operation": "equals"
+							}
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "bcdc357c-80bf-5349-9255-9f3c1e05d045",
+			"name": "Approved?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [2520, 160]
+		},
+		{
+			"parameters": {
+				"resource": "campaign",
+				"operation": "start",
+				"campaignId": "={{ $('Settings').first().json.campaignId.trim() }}",
+				"consentToCharge": false
+			},
+			"id": "1b76bc35-8b8e-5cf3-bd63-48e7e398e325",
+			"name": "Start campaign",
+			"type": "n8n-nodes-thunderphone.thunderPhone",
+			"typeVersion": 1,
+			"position": [2800, 140]
+		},
+		{
+			"parameters": {},
+			"id": "a520062b-bd29-56a1-a8b7-e80a4ab965c1",
+			"name": "Not started",
+			"type": "n8n-nodes-base.noOp",
+			"typeVersion": 1,
+			"position": [2560, 420]
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"Run import": {
+			"main": [
+				[
+					{
+						"node": "Settings",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Settings": {
+			"main": [
+				[
+					{
+						"node": "Get campaign",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Get campaign": {
+			"main": [
+				[
+					{
+						"node": "Empty draft?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Empty draft?": {
+			"main": [
+				[
+					{
+						"node": "Read contact rows",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Campaign not ready",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Read contact rows": {
+			"main": [
+				[
+					{
+						"node": "Keep rows with consent",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Keep rows with consent": {
+			"main": [
+				[
+					{
+						"node": "Map contact fields",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Map contact fields": {
+			"main": [
+				[
+					{
+						"node": "Remove duplicate numbers",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Remove duplicate numbers": {
+			"main": [
+				[
+					{
+						"node": "Build contact list",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Build contact list": {
+			"main": [
+				[
+					{
+						"node": "Add contacts to draft campaign",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Add contacts to draft campaign": {
+			"main": [
+				[
+					{
+						"node": "Approve campaign start",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Approve campaign start": {
+			"main": [
+				[
+					{
+						"node": "Approved?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Approved?": {
+			"main": [
+				[
+					{
+						"node": "Start campaign",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Not started",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"tags": [],
+	"meta": {
+		"templateCredsSetupCompleted": false
+	}
+}

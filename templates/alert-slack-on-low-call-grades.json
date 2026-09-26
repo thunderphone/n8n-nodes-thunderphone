@@ -1,0 +1,171 @@
+{
+	"name": "Send Slack alerts for low-scoring ThunderPhone calls",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Send Slack alerts for low-scoring ThunderPhone calls\n\nThunderPhone grades every call its AI voice agents handle. This workflow posts a Slack message when a call scores below your threshold, with the score, outcome, summary, detected issues and a link to the call, so a teammate can review it the same day.\n\n### How it works\n1. **Call graded** starts the workflow from ThunderPhone's signed call-graded webhook. It registers the webhook when you publish the workflow and removes it when you unpublish.\n2. **Settings** holds the score threshold (0 to 100).\n3. **Score below threshold?** checks the grade. Calls without a score are skipped.\n4. **Post alert to Slack** sends the message to your channel.\n\n### Setup\n1. Install the verified **ThunderPhone** node (`n8n-nodes-thunderphone`) from the nodes panel. An instance owner or admin does this once.\n2. In ThunderPhone, open **Organization > Keys**, create a server API key and save it in n8n as a **ThunderPhone API** credential. The key's user needs the admin or owner role so the trigger can register its webhook.\n3. Set `scoreThreshold` in **Settings**. The default is 70.\n4. Connect Slack in **Post alert to Slack** and pick a channel.\n5. Publish the workflow. ThunderPhone must reach your n8n instance over public HTTPS.\n\n### Customization\n- A call can be graded more than once: a fast first grade is often followed by a full grade. To alert only on the full grade, add a condition on `data.grade.grader_model`.\n- Test and simulation calls are graded too, so they can alert. To skip them, add a ThunderPhone **Get call** step and filter on `is_test_call` and `is_simulation`.",
+				"height": 800,
+				"width": 560
+			},
+			"id": "57a1d83f-cbe5-53ee-b439-5d07e62ff252",
+			"name": "Template overview",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-720, -200]
+		},
+		{
+			"parameters": {
+				"content": "## 1. Receive the grade\nFires each time ThunderPhone finishes grading a call. Change the threshold in **Settings**.",
+				"height": 380,
+				"width": 480,
+				"color": 7
+			},
+			"id": "c08287c4-5208-55a3-9926-125f3832da2c",
+			"name": "Section: receive the grade",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-100, -20]
+		},
+		{
+			"parameters": {
+				"content": "## 2. Alert on low scores\nOnly calls scoring below the threshold reach Slack.",
+				"height": 380,
+				"width": 480,
+				"color": 7
+			},
+			"id": "25b39079-7ff5-596e-b63a-cffa0d612de6",
+			"name": "Section: alert",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [420, -20]
+		},
+		{
+			"parameters": {
+				"event": "callGraded"
+			},
+			"id": "8568a605-bc77-5954-9b13-ad20bda620aa",
+			"name": "Call graded",
+			"type": "n8n-nodes-thunderphone.thunderPhoneTrigger",
+			"typeVersion": 1,
+			"position": [0, 180],
+			"webhookId": "4edc62c1-89d7-55f4-96f2-30cbfb49a3a6"
+		},
+		{
+			"parameters": {
+				"assignments": {
+					"assignments": [
+						{
+							"id": "400124c3-19d0-59df-a903-0a2c3ccac4f4",
+							"name": "scoreThreshold",
+							"value": 70,
+							"type": "number"
+						}
+					]
+				},
+				"includeOtherFields": true,
+				"options": {}
+			},
+			"id": "141c49f6-dc2c-50e7-b8fe-37ca796971b1",
+			"name": "Settings",
+			"type": "n8n-nodes-base.set",
+			"typeVersion": 3.4,
+			"position": [220, 180]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "strict",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"id": "0e8dad4c-6966-581e-b949-9e133197177a",
+							"leftValue": "={{ typeof $json.data.grade.score === 'number' && $json.data.grade.score < $json.scoreThreshold }}",
+							"rightValue": "",
+							"operator": {
+								"type": "boolean",
+								"operation": "true",
+								"singleValue": true
+							}
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "16dc90a1-299e-539f-8e27-1df9eca1ad67",
+			"name": "Score below threshold?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [500, 180]
+		},
+		{
+			"parameters": {
+				"select": "channel",
+				"channelId": {
+					"__rl": true,
+					"value": "",
+					"mode": "list"
+				},
+				"text": "=*Low ThunderPhone call score: {{ $json.data.grade.score }}/100* (threshold {{ $json.scoreThreshold }})\n*Agent:* {{ $json.data.agent_name ?? 'n/a' }}\n*Outcome:* {{ $json.data.grade.call_outcome }}\n*Summary:* {{ $json.data.grade.summary }}\n{{ ($json.data.grade.detected_issues ?? []).length ? '*Issues:* ' + $json.data.grade.detected_issues.join('; ') : '' }}\n<https://app.thunderphone.com/dashboard/call-history/{{ $json.data.call_id }}|Open call {{ $json.data.call_id }} in ThunderPhone>",
+				"otherOptions": {
+					"includeLinkToWorkflow": false,
+					"mrkdwn": true
+				}
+			},
+			"id": "1d3438f1-3f24-5bab-b8cd-29baa54f7cfd",
+			"name": "Post alert to Slack",
+			"type": "n8n-nodes-base.slack",
+			"typeVersion": 2.3,
+			"position": [720, 160],
+			"webhookId": "11cb773a-a66c-5cc3-ab36-ed0f76b8ff85"
+		}
+	],
+	"pinData": {},
+	"connections": {
+		"Call graded": {
+			"main": [
+				[
+					{
+						"node": "Settings",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Settings": {
+			"main": [
+				[
+					{
+						"node": "Score below threshold?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		},
+		"Score below threshold?": {
+			"main": [
+				[
+					{
+						"node": "Post alert to Slack",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
+		}
+	},
+	"active": false,
+	"settings": {
+		"executionOrder": "v1"
+	},
+	"tags": [],
+	"meta": {
+		"templateCredsSetupCompleted": false
+	}
+}
