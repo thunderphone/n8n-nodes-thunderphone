@@ -50,7 +50,7 @@ for the disclaimer, add it to **Additional info**.
 - Warning stickies are optional: red, covering one node, used sparingly.
 - An optional video sticky embeds YouTube with `@[youtube](<video id>)`.
 
-All four templates follow these rules. The overview stickies are 274 to 298 words and every
+All four templates follow these rules. The overview stickies are 286 to 294 words and every
 section sticky is under 50 words.
 
 ### Workflow content
@@ -144,9 +144,26 @@ needs "Allow access to file URLs" for this.
 
 ## Submission log
 
-| Template | Submitted | Status |
-| --- | --- | --- |
-| Log completed ThunderPhone calls to Google Sheets | 2026-09-26 | Under review (3-5 business days) |
-| Send Slack alerts for low-scoring ThunderPhone calls | | Waiting: one template in review at a time |
-| Call new leads from a webhook with a ThunderPhone AI voice agent | | Waiting |
-| Add Google Sheets contacts to a ThunderPhone campaign and start it after approval | | Waiting |
+| Template                                                                          | Submitted  | Status                                                                                            |
+| --------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------- |
+| Log completed ThunderPhone calls to Google Sheets                                 | 2026-09-26 | Under review (3-5 business days). Submitted with the old field set; update or resubmit, see below |
+| Send Slack alerts for low-scoring ThunderPhone calls                              |            | Waiting: one template in review at a time                                                         |
+| Call new leads from a webhook with a ThunderPhone AI voice agent                  |            | Waiting                                                                                           |
+| Add Google Sheets contacts to a ThunderPhone campaign and start it after approval |            | Waiting                                                                                           |
+
+### Data minimization change (2026-09-27)
+
+Compliance review changed the templates after template 1 was submitted. The defaults no longer
+copy call transcripts, summaries or detected issues out of ThunderPhone:
+
+- Template 1 dropped the Transcript and Summary columns and the "Generate a call summary" setup
+  step. The copy under review in the portal still has them.
+- Template 2's Slack message now carries only the score, outcome label, agent, call ID and link.
+- Every overview sticky and `README.md` entry now carries the personal and health information
+  note, and templates 1 and 4 carry the Google Sheets retention note.
+
+The portal copy of template 1 must be replaced before it is published. If the portal lets you
+upload an updated JSON while the template is under review, upload the current
+`log-completed-calls-to-google-sheets.json` there. Otherwise withdraw it, or wait for the review
+result and choose **Implement changes**, then upload the current file. Templates 2 to 4 have
+not been submitted, so submit the current files. Use the regenerated images in `images/`.

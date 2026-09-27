@@ -3,7 +3,7 @@
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Log completed ThunderPhone calls to Google Sheets\n\nEach time a ThunderPhone AI voice agent finishes a phone or web call, this workflow adds one row to a Google Sheet with the caller, duration, end reason, AI summary, transcript and a link to the call in the ThunderPhone dashboard.\n\n### How it works\n1. **Call completed** starts the workflow from ThunderPhone's signed call-completed webhook. It registers the webhook when you publish the workflow and removes it when you unpublish.\n2. **Get call details** reads the stored call record, including the summary and transcript.\n3. **Skip test calls** drops test calls made from the agent builder.\n4. **Format sheet row** turns the call into spreadsheet columns.\n5. **Append to Google Sheet** adds the row.\n\n### Setup\n1. Install the verified **ThunderPhone** node (`n8n-nodes-thunderphone`) from the nodes panel. An instance owner or admin does this once.\n2. In ThunderPhone, open **Organization > Keys**, create a server API key and save it in n8n as a **ThunderPhone API** credential. The key's user needs the admin or owner role so the trigger can register its webhook.\n3. For a summary, turn on **Generate a call summary** under **Data to collect** in the agent builder. It is off by default.\n4. Create a tab named `Calls` with these headers: Call ID, Started at, Direction, From, To, Agent, Duration (s), Status, End reason, Summary, Transcript, Call link.\n5. Pick the spreadsheet in **Append to Google Sheet** and publish. ThunderPhone must reach n8n over public HTTPS.\n\n### Customization\n- Add or remove columns in **Format sheet row**.\n- Recording links from ThunderPhone expire, so the sheet stores the dashboard link instead.",
+				"content": "## Log completed ThunderPhone calls to Google Sheets\n\nWhen a ThunderPhone AI voice agent finishes a call, this workflow adds a Google Sheets row with the caller, duration, end reason and a link to the call. It does not copy transcripts or summaries.\n\n### How it works\n1. **Call completed** starts the workflow from ThunderPhone's signed webhook. It registers the webhook on publish and removes it on unpublish.\n2. **Get call details** reads the call record, and **Skip test calls** drops agent-builder test calls.\n3. **Format sheet row** picks the columns, and **Append to Google Sheet** adds the row.\n\n### Setup\n1. An instance owner or admin installs the verified **ThunderPhone** node (`n8n-nodes-thunderphone`) from the nodes panel.\n2. Add a ThunderPhone server API key (**Organization > Keys**) in n8n as a **ThunderPhone API** credential. The key's user needs the admin or owner role so the trigger can register its webhook.\n3. Create a tab named `Calls` with these headers: Call ID, Started at, Direction, From, To, Agent, Duration (s), Status, End reason, Call link.\n4. Pick the spreadsheet in **Append to Google Sheet** and publish. n8n must be reachable over public HTTPS.\n\n### Customization\n- To add the transcript or summary, add a field in **Format sheet row** from the call record's `transcripts` or `summary` and a matching column. Read the note below first.\n\n### Data handling\nCall transcripts and summaries can contain personal or health information. Add them only if your organization is allowed to store that data in the connected app, and under a BAA where health information is involved. Rows you copy into Google Sheets stay there until you delete them. Set a retention rule that fits your data.\n\nn8n keeps each execution's input, including transcripts; limit execution data retention in n8n.",
 				"height": 820,
 				"width": 560
 			},
@@ -149,18 +149,6 @@
 							"id": "46a5db2c-65f8-5c73-9a93-a8c6636615b7",
 							"name": "End reason",
 							"value": "={{ $json.end_reason }}",
-							"type": "string"
-						},
-						{
-							"id": "fda1aace-d17b-5676-8042-39621ccc145e",
-							"name": "Summary",
-							"value": "={{ $json.summary ?? '' }}",
-							"type": "string"
-						},
-						{
-							"id": "ef291d7d-1f56-5d45-9fa3-64ad66e72460",
-							"name": "Transcript",
-							"value": "={{ ($json.transcripts ?? []).filter(t => t.role === 'user' || t.role === 'agent').map(t => (t.role === 'user' ? 'Caller: ' : 'Agent: ') + t.content).join('\\n').slice(0, 45000) }}",
 							"type": "string"
 						},
 						{

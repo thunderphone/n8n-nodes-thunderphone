@@ -15,6 +15,10 @@ from the editor (**Import from file**) or upload it in the Creator Portal. See
 The files carry no credentials, credential IDs, spreadsheet IDs, channel IDs or pinned data.
 The user picks each of those after import.
 
+By default no template copies call transcripts, summaries or grader notes into another app.
+Template 1 writes call metadata and a dashboard link, template 2 posts the score, outcome,
+agent and link, and template 4 sends only `phone_number`, `lead_id` and `first_name`.
+
 The descriptions below follow the Creator Portal's structured form. Paste each section into
 the field with the same name. The portal requires 10 to 50 words in **Quick overview** and at
 least 50 words each in **How it works** and **Setup**; every description below meets those
@@ -29,23 +33,22 @@ limits. Each workflow's yellow overview sticky carries a shorter version of its 
 ### Quick overview
 
 Keep a running log of every call your ThunderPhone AI voice agents handle. Each finished phone
-or web call becomes one Google Sheets row with the caller, duration, end reason, AI summary,
-transcript and a link to the call.
+or web call becomes one Google Sheets row with the caller, duration, end reason and a link to
+the call. Transcripts and summaries are not written to the sheet.
 
 ### How it works
 
 1. The ThunderPhone Trigger starts the workflow from ThunderPhone's signed call-completed webhook. It registers the webhook when you publish the workflow and removes it when you unpublish, and it rejects requests without a valid signature.
-2. Get call details reads the stored call record, including the summary and transcript.
+2. Get call details reads the stored call record.
 3. Skip test calls drops calls made from the agent builder.
-4. Format sheet row turns the call into spreadsheet columns, and the Google Sheets node appends the row.
+4. Format sheet row keeps only the call ID, start time, direction, From and To numbers, agent, duration, status, end reason and dashboard link, and the Google Sheets node appends the row.
 
 ### Setup
 
 1. Install the verified ThunderPhone node (`n8n-nodes-thunderphone`) from the nodes panel. An instance owner or admin does this once.
 2. In ThunderPhone, open Organization > Keys, create a server API key and save it in n8n as a ThunderPhone API credential. The key's user needs the admin or owner role so the trigger can register its webhook.
-3. To fill the Summary column, turn on Generate a call summary under Data to collect in the ThunderPhone agent builder. It is off by default, and without it the column stays empty.
-4. Create a spreadsheet with a tab named `Calls` and this header row: Call ID, Started at, Direction, From, To, Agent, Duration (s), Status, End reason, Summary, Transcript, Call link.
-5. Connect Google Sheets and pick the spreadsheet, then publish the workflow.
+3. Create a spreadsheet with a tab named `Calls` and this header row: Call ID, Started at, Direction, From, To, Agent, Duration (s), Status, End reason, Call link.
+4. Connect Google Sheets and pick the spreadsheet, then publish the workflow.
 
 ### Requirements
 
@@ -55,7 +58,8 @@ transcript and a link to the call.
 
 ### Customization
 
-- Add or remove columns in Format sheet row. The call record also has extracted data fields.
+- Add or remove columns in Format sheet row.
+- To add the transcript or summary, add a field in Format sheet row from the call record's `transcripts` or `summary` and a matching sheet column. A summary exists only when the agent has Generate a call summary turned on under Data to collect. Read Additional info first.
 - Call grades and outcomes arrive after the call-completed event, so they are not in this row. Use the Call Graded trigger to record them separately.
 - Replace Google Sheets with Airtable, Notion or your CRM.
 - Recording links from ThunderPhone expire, so the sheet stores the dashboard link. Download the recording in the workflow if you need to keep it.
@@ -64,6 +68,8 @@ transcript and a link to the call.
 
 Uses the verified ThunderPhone community node. ThunderPhone sends the webhook with `POST` to
 the trigger's Production URL, so the workflow must be published for rows to appear.
+
+Call transcripts and summaries can contain personal or health information. Add them only if your organization is allowed to store that data in the connected app, and under a BAA where health information is involved. Rows you copy into Google Sheets stay there until you delete them. Set a retention rule that fits your data. n8n also saves each execution's input, which includes ThunderPhone's full webhook payload. Set how long n8n keeps execution data, or turn off saving successful executions in the workflow settings.
 
 ---
 
@@ -74,15 +80,15 @@ the trigger's Production URL, so the workflow must be published for rows to appe
 ### Quick overview
 
 Catch bad calls the same day. When ThunderPhone grades a call below your threshold, this
-workflow posts the score, outcome, summary, detected issues and a link to the call in Slack so
-a teammate can review it.
+workflow posts the score, outcome, agent and a link to the call in Slack so a teammate can
+review it in ThunderPhone.
 
 ### How it works
 
 1. The ThunderPhone Trigger starts the workflow from ThunderPhone's signed call-graded webhook. It registers the webhook when you publish the workflow and removes it when you unpublish.
 2. Settings holds the score threshold, from 0 to 100.
 3. Score below threshold? passes only calls that have a numeric score under the threshold.
-4. Post alert to Slack sends a message with the score, agent, outcome, summary, issues and a link to the call in the ThunderPhone dashboard.
+4. Post alert to Slack sends a message with only the score, outcome label, agent, call ID and a link to the call in the ThunderPhone dashboard. It carries no transcript, summary, grader notes or caller details.
 
 ### Setup
 
@@ -102,11 +108,14 @@ a teammate can review it.
 - A call can be graded more than once: a fast first grade is often followed by a full grade. To alert only on the full grade, add a condition on `data.grade.grader_model`.
 - Test and simulation calls are graded too, so they can alert. To skip them, add a ThunderPhone Get call step and filter on `is_test_call` and `is_simulation`.
 - Alert on the outcome instead of the score, for example `data.grade.call_outcome` equals `failure`.
+- The grade also carries a summary and detected issues. Add them to the message only after reading Additional info.
 - Swap Slack for email, Microsoft Teams or a ticketing tool.
 
 ### Additional info
 
 Uses the verified ThunderPhone community node. ThunderPhone grades a call after it ends.
+
+Call transcripts and summaries can contain personal or health information. Add them only if your organization is allowed to store that data in the connected app, and under a BAA where health information is involved. Slack keeps messages under your workspace's retention settings. Outcome labels come from the list your team sets under Reporting in the agent builder, so keep health conditions out of them. n8n also saves each execution's input, which includes ThunderPhone's full webhook payload. Set how long n8n keeps execution data, or turn off saving successful executions in the workflow settings.
 
 ---
 
@@ -153,6 +162,8 @@ Uses the verified ThunderPhone community node. The call is real and spends Thund
 credits. Your organization is responsible for having consent to call each number and for
 following the calling laws that apply.
 
+Call transcripts and summaries can contain personal or health information. Add them only if your organization is allowed to store that data in the connected app, and under a BAA where health information is involved.
+
 ---
 
 ## 4. Add Google Sheets contacts to a ThunderPhone campaign and start it after approval
@@ -168,7 +179,7 @@ contacts were accepted, and start the campaign only after someone approves it in
 
 1. Settings holds the ID of a draft campaign you created in ThunderPhone. Get campaign reads it, and Empty draft? stops the run with an error unless the campaign is a draft with no contacts. ThunderPhone keeps every contact you add, so this check keeps a re-run from adding the list twice.
 2. Read contact rows loads the sheet, and Keep rows with consent keeps only rows with a phone number and `yes` in `consent_to_call`.
-3. Map contact fields picks the columns to send: `phone_number`, plus `lead_id` and `first_name`, which become call variables for the agent. Remove duplicate numbers drops repeated phone numbers, and Build contact list makes one list.
+3. Map contact fields sends only `phone_number`, `lead_id` and `first_name`; other sheet columns never leave n8n. `lead_id` and `first_name` become call variables for the agent. Remove duplicate numbers drops repeated phone numbers, and Build contact list makes one list.
 4. Add contacts to draft campaign uploads the list and reports how many contacts ThunderPhone accepted and rejected.
 5. Approve campaign start shows those counts in a form and waits up to 24 hours for a decision. Start campaign runs only when the approver chooses to start.
 
@@ -200,3 +211,5 @@ added, or the approver chooses not to start, start the campaign from the Thunder
 when ready. Re-running the workflow stops at the draft check instead of adding the contacts
 again. Your organization is responsible for having consent to call each number and for following
 the calling laws that apply.
+
+Call transcripts and summaries can contain personal or health information. Add them only if your organization is allowed to store that data in the connected app, and under a BAA where health information is involved. Rows you copy into Google Sheets stay there until you delete them. Set a retention rule that fits your data.
